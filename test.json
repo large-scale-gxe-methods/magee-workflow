@@ -1,0 +1,14 @@
+{
+  "MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
+  "MAGEE.phenofile": "testfiles/phenos.csv",
+  "MAGEE.sample_id_header": "id",
+  "MAGEE.outcome": "disease",
+  "MAGEE.binary_outcome": "true",
+  "MAGEE.exposure_names": "sex",
+  "MAGEE.covar_names": "age",
+  "MAGEE.grmfile": "testfiles/GRM.rds",
+  "MAGEE.groupfile": "testfiles/SetID.withweights.txt",
+  "MAGEE.groupfile_delimiter": "\t",
+  "MAGEE.memory": "1",
+  "MAGEE.disk": "1"
+}
