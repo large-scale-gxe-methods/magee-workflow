@@ -10,7 +10,7 @@ gdsfile <- args[3]
 groupfile <- args[4]
 
 # Read in null model object
-null_model <- readRDS(null_modelfile)
+null_model <- get(load(null_modelfile))
 
 # Run GWIS
 res <- MAGEE(null_model, interaction=exposure, gdsfile, groupfile, 

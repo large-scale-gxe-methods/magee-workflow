@@ -8,12 +8,12 @@ task run_null_model {
 	String? covar_names
 	String delimiter
 	String missing
-	File grmfile
+	File? kinsfile
 	Int memory
 	Int disk
 
 	command {
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} ${exposure_names} "${covar_names}" ${delimiter} ${missing} ${grmfile}
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} ${exposure_names} "${covar_names}" ${delimiter} ${missing} "${kinsfile}"
 	}
 
 	runtime {
@@ -23,7 +23,7 @@ task run_null_model {
 	}
 
 	output {
-		File null_model = "null_model.rds"
+		File null_model = "null_model.Rda"
 	}
 }
 
@@ -86,7 +86,7 @@ workflow MAGEE {
 	String? covar_names
 	String? delimiter = ","
 	String? missing = "NA"
-	File grmfile
+	File? kinsfile
 	File groupfile
 	Int? memory = 10
 	Int? disk = 50
@@ -102,7 +102,7 @@ workflow MAGEE {
 			covar_names = covar_names,
 			delimiter = delimiter,
 			missing = missing,
-			grmfile = grmfile,
+			kinsfile = kinsfile,
 			memory = memory,
 			disk = disk
 	}
@@ -141,7 +141,7 @@ workflow MAGEE {
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
-		grmfile: "Path to file containing kinship matrix (stored as binary .rds R object)."
+		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either an .Rda file storing a single matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
 		groupfile: "Path to variant group definition file. File should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
