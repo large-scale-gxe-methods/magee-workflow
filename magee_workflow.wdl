@@ -133,8 +133,8 @@ workflow MAGEE {
 	output {
 		File? null_model = null_modelfile
 		File results = cat_results.all_results
-		#Array[File] system_resource_usage = run_tests.system_resource_usage
-		#Array[File] process_resource_usage = run_tests.process_resource_usage
+		Array[File] system_resource_usage = run_gwis.system_resource_usage
+		Array[File] process_resource_usage = run_gwis.process_resource_usage
 	}
 
 	parameter_meta {
