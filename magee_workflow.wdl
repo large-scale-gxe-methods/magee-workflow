@@ -77,7 +77,6 @@ task cat_results {
 
 workflow MAGEE {
 
-	Array[File] gdsfiles
 	File phenofile
 	String? sample_id_header = "sampleID"
 	String outcome
@@ -87,30 +86,36 @@ workflow MAGEE {
 	String? delimiter = ","
 	String? missing = "NA"
 	File? kinsfile
+	File? null_modelfile_input
+	Array[File] gdsfiles
 	File groupfile
 	Int? memory = 10
 	Int? disk = 50
 	Int? monitoring_freq = 1
 
-	call run_null_model {
-		input:
-			phenofile = phenofile,
-			sample_id_header = sample_id_header,
-			outcome = outcome,
-			binary_outcome = binary_outcome,
-			exposure_names = exposure_names,
-			covar_names = covar_names,
-			delimiter = delimiter,
-			missing = missing,
-			kinsfile = kinsfile,
-			memory = memory,
-			disk = disk
+	if (!defined(null_modelfile_input)) {
+		call run_null_model {
+			input:
+				phenofile = phenofile,
+				sample_id_header = sample_id_header,
+				outcome = outcome,
+				binary_outcome = binary_outcome,
+				exposure_names = exposure_names,
+				covar_names = covar_names,
+				delimiter = delimiter,
+				missing = missing,
+				kinsfile = kinsfile,
+				memory = memory,
+				disk = disk
+		}
 	}
+
+	File? null_modelfile = if (defined(null_modelfile_input)) then null_modelfile_input else run_null_model.null_model
 
 	scatter (gdsfile in gdsfiles) {
 		call run_gwis {
 			input:
-				null_modelfile = run_null_model.null_model,
+				null_modelfile = null_modelfile,
 				exposure = exposure_names,
 				gdsfile = gdsfile,
 				groupfile = groupfile,
@@ -126,13 +131,13 @@ workflow MAGEE {
 	}
 
 	output {
+		File? null_model = null_modelfile
 		File results = cat_results.all_results
 		#Array[File] system_resource_usage = run_tests.system_resource_usage
 		#Array[File] process_resource_usage = run_tests.process_resource_usage
 	}
 
 	parameter_meta {
-		gdsfiles: "Array of genotype filepaths in .gds format."
 		phenofile: "Phenotype filepath."	
 		sample_id_header: "Optional column header name of sample ID in phenotype file."
 		outcome: "Column header name of phenotype data in phenotype file."
@@ -142,6 +147,8 @@ workflow MAGEE {
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
 		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
+		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
+		gdsfiles: "Array of genotype filepaths in .gds format."
 		groupfile: "Path to variant group definition file. File should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
