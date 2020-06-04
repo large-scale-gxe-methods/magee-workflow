@@ -1,6 +1,7 @@
 library(readr)
 library(MAGEE)
 
+
 # Parse arguments
 args <- commandArgs(T)
 
@@ -26,8 +27,8 @@ phenos <- as.data.frame(read_delim(phenofile, delim=delimiter, na=missing))
 get_kinship_matrix <- function(kinsfile) {
   if (kinsfile == "") {
     NULL
-  } else if (grepl('Rda', k_mat, ignore.case=T)) {
-    get(load(kinsfile))
+  } else if (grepl('rds', k_mat, ignore.case=T)) {
+    readRDS(kinsfile)
   } else {
     as.matrix(read.csv(kinsfile, as.is=T, check.names=F, row.names=1))
   }
@@ -40,4 +41,4 @@ family <- if (binary_outcome) binomial(link="logit") else gaussian(link="identit
 # Fit null model
 model0 <- GMMAT::glmmkin(as.formula(null_model_str), data=phenos, 
 		  	 kins=k_mat, id=sample_id_header, family=family)
-save("model0", file="null_model.Rda")
+saveRDS(model0, file="null_model.rds")

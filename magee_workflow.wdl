@@ -23,7 +23,7 @@ task run_null_model {
 	}
 
 	output {
-		File null_model = "null_model.Rda"
+		File null_model = "null_model.rds"
 	}
 }
 
@@ -141,7 +141,7 @@ workflow MAGEE {
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
-		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either an .Rda file storing a single matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
+		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
 		groupfile: "Path to variant group definition file. File should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
