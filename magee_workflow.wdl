@@ -33,6 +33,7 @@ task run_gwis {
 	String exposure
 	File gdsfile
 	File groupfile
+	Int ncores
 	Int memory
 	Int disk
 	Int monitoring_freq
@@ -41,7 +42,7 @@ task run_gwis {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} ${exposure} ${gdsfile} ${groupfile}
+		Rscript /MAGEE_GWIS.R ${null_modelfile} ${exposure} ${gdsfile} ${groupfile} ${ncores}
 	}
 
 	runtime {
@@ -89,9 +90,12 @@ workflow MAGEE {
 	File? null_modelfile_input
 	Array[File] gdsfiles
 	File groupfile
+	Int? ncores = 1
 	Int? memory = 10
 	Int? disk = 50
 	Int? monitoring_freq = 1
+
+	#Int null_memory = 2 * ceil(size(kinsfile, "GB")) + 5
 
 	if (!defined(null_modelfile_input)) {
 		call run_null_model {
@@ -119,6 +123,7 @@ workflow MAGEE {
 				exposure = exposure_names,
 				gdsfile = gdsfile,
 				groupfile = groupfile,
+				ncores = ncores,
 				memory = memory,
 				disk = disk,
 				monitoring_freq = monitoring_freq
@@ -141,7 +146,7 @@ workflow MAGEE {
 		phenofile: "Phenotype filepath."	
 		sample_id_header: "Optional column header name of sample ID in phenotype file."
 		outcome: "Column header name of phenotype data in phenotype file."
-                binary_outcome: "Boolean: is the outcome binary? Otherwise, quantitative is assumed."
+		binary_outcome: "Boolean: is the outcome binary? Otherwise, quantitative is assumed."
 		exposure_names: "Column header name(s) of the exposures for genotype interaction testing (space-delimited)."
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
 		delimiter: "Delimiter used in the phenotype file."
@@ -150,6 +155,7 @@ workflow MAGEE {
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
 		groupfile: "Path to variant group definition file. File should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
+		ncores: "Optional number of compute cores to be used for multi-threading during the genome-wide scan (default = 1)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
 		monitoring_freq: "Delay between each output for process monitoring (in seconds). Default is 1 second."

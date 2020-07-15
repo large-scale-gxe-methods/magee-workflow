@@ -27,7 +27,7 @@ phenos <- as.data.frame(read_delim(phenofile, delim=delimiter, na=missing))
 get_kinship_matrix <- function(kinsfile) {
   if (kinsfile == "") {
     NULL
-  } else if (grepl('rds', k_mat, ignore.case=T)) {
+  } else if (grepl('rds', kinsfile, ignore.case=T)) {
     readRDS(kinsfile)
   } else {
     as.matrix(read.csv(kinsfile, as.is=T, check.names=F, row.names=1))
