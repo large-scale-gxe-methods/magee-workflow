@@ -29,6 +29,8 @@ get_kinship_matrix <- function(kinsfile) {
     NULL
   } else if (grepl('rds', kinsfile, ignore.case=T)) {
     readRDS(kinsfile)
+  } else if (grepl('RData', kinsfile, ignore.case=T)) {
+    get(load(kinsfile))
   } else {
     as.matrix(read.csv(kinsfile, as.is=T, check.names=F, row.names=1))
   }
