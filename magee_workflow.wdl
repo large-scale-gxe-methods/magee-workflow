@@ -13,7 +13,7 @@ task run_null_model {
 	Int disk
 
 	command {
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} ${exposure_names} "${covar_names}" ${delimiter} ${missing} "${kinsfile}"
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}"
 	}
 
 	runtime {
@@ -30,7 +30,7 @@ task run_null_model {
 task run_gwis {
 
 	File null_modelfile
-	String exposure
+	String exposure_names
 	File gdsfile
 	File groupfile
 	Int ncores
@@ -42,7 +42,7 @@ task run_gwis {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} ${exposure} ${gdsfile} ${groupfile} ${ncores}
+		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${ncores}
 	}
 
 	runtime {
@@ -120,7 +120,7 @@ workflow MAGEE {
 		call run_gwis {
 			input:
 				null_modelfile = null_modelfile,
-				exposure = exposure_names,
+				exposure_names = exposure_names,
 				gdsfile = gdsfile,
 				groupfile = groupfile,
 				ncores = ncores,
@@ -145,7 +145,7 @@ workflow MAGEE {
 	parameter_meta {
 		phenofile: "Phenotype filepath."	
 		sample_id_header: "Optional column header name of sample ID in phenotype file."
-		outcome: "Column header name of phenotype data in phenotype file."
+		outcome: "Column header name of phenotype data in phenotype file." 
 		binary_outcome: "Boolean: is the outcome binary? Otherwise, quantitative is assumed."
 		exposure_names: "Column header name(s) of the exposures for genotype interaction testing (space-delimited)."
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
