@@ -18,6 +18,12 @@ null_model <- readRDS(null_modelfile)
 # Parse exposures
 exposures <- strsplit(exposure_names, split=" ")[[1]]
 
+# Remove header from group file if necessary
+if (grepl("group", readLines(groupfile, n=1))) {
+  system(paste0("tail -n +2 ", groupfile, " > groupfile.tmp"))
+  groupfile <- "groupfile.tmp"
+}
+
 # Run GWIS
 res <- MAGEE(null_model, interaction=exposures, gdsfile, groupfile, 
 	     tests=c("JV", "JF", "JD"), ncores=ncores)
