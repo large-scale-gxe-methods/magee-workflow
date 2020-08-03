@@ -9,6 +9,7 @@
   "MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
   "MAGEE.groupfile": "testfiles/SetID.withweights.txt",
   "MAGEE.groupfile_delimiter": "\t",
+  "MAGEE.threads": "2",
   "MAGEE.memory": "1",
   "MAGEE.disk": "1"
 }

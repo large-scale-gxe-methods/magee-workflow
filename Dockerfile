@@ -3,7 +3,7 @@ FROM bioconductor/bioconductor_docker:RELEASE_3_11
 # Dependencies
 RUN Rscript -e 'install.packages("BiocManager")'
 RUN Rscript -e 'BiocManager::install(c("SeqArray", "SeqVarTools", "foreach", "GMMAT", "CompQuadForm"))'
-RUN Rscript -e 'install.packages("readr")'
+RUN Rscript -e 'install.packages(c("readr", "doMC"))'
 
 # Install MAGEE R package
 COPY MAGEE_0.1.1.tar.gz /MAGEE_0.1.1.tar.gz
