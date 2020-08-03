@@ -11,3 +11,6 @@ RUN Rscript -e 'install.packages("MAGEE_0.1.1.tar.gz", repos=NULL, type="source"
 
 # Copy in R scripts
 COPY MAGEE_null_model.R MAGEE_GWIS.R /
+
+# Install tools for monitoring and resource tracking
+RUN apt-get update && apt-get -y install dstat atop
