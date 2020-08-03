@@ -5,7 +5,7 @@
   "MAGEE.binary_outcome": "false",
   "MAGEE.exposure_names": "sex",
   "MAGEE.covar_names": "age",
-  "MAGEE.grmfile": "testfiles/GRM.rds",
+  "MAGEE.kinsfile": "testfiles/GRM.rds",
   "MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
   "MAGEE.groupfile": "testfiles/SetID.withweights.txt",
   "MAGEE.groupfile_delimiter": "\t",
