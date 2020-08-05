@@ -90,7 +90,7 @@ workflow MAGEE {
 	File? kinsfile
 	File? null_modelfile_input
 	Array[File] gdsfiles
-	File groupfile
+	Array[File] groupfiles
 	Int? threads = 1
 	Int? memory = 10
 	Int? disk = 50
@@ -117,13 +117,13 @@ workflow MAGEE {
 
 	File? null_modelfile = if (defined(null_modelfile_input)) then null_modelfile_input else run_null_model.null_model
 
-	scatter (gdsfile in gdsfiles) {
+	scatter (filepair in zip(gdsfiles, groupfiles)) {
 		call run_gwis {
 			input:
 				null_modelfile = null_modelfile,
 				exposure_names = exposure_names,
-				gdsfile = gdsfile,
-				groupfile = groupfile,
+				gdsfile = filepair.left,
+				groupfile = filepair.right,
 				threads = threads,
 				memory = memory,
 				disk = disk,
@@ -155,7 +155,7 @@ workflow MAGEE {
 		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
-		groupfile: "Path to variant group definition file. File should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
+		groupfiles: "Array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
 		threads: "Optional number of compute cores to be requested and used for multi-threading during the genome-wide scan (default = 1)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."

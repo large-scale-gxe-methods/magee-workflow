@@ -8,7 +8,7 @@
   "MAGEE.grmfile": "testfiles/GRM.rds",
   "MAGEE.null_modelfile_input": "testfiles/null_model.rds",
   "MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
-  "MAGEE.groupfile": "testfiles/SetID.withweights.txt",
+  "MAGEE.groupfiles": ["testfiles/SetID.withweights.txt", "testfiles/SetID.withweights.txt"],
   "MAGEE.groupfile_delimiter": "\t",
   "MAGEE.memory": "1",
   "MAGEE.disk": "1"
