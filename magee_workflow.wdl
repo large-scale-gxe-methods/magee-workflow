@@ -227,6 +227,6 @@ workflow MAGEE {
         meta {
                 author: "Kenny Westerman"
                 email: "kewesterman@mgh.harvard.edu"
-                description: "Run interaction tests using MAGEE and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
+                description: "Run aggregate and single-variant interaction tests using MAGEE and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
         }
 }

@@ -1,1 +1,1 @@
-Implementation of MAGEE workflow for efficient large-scale aggregate tests of gene-environment interaction.
+Implementation of MAGEE workflow for efficient, large-scale aggregate and single-variant tests of gene-environment interaction in related individuals.
