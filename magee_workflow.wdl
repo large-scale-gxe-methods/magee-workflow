@@ -27,7 +27,7 @@ task run_null_model {
 	}
 }
 
-task run_gwis {
+task run_gwis_agg {
 
 	File null_modelfile
 	String exposure_names
@@ -45,6 +45,40 @@ task run_gwis {
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
 		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		memory: "${memory} GB"
+		cpu: "${threads}"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File res = "magee_res"
+		File system_resource_usage = "system_resource_usage.log"
+		File process_resource_usage = "process_resource_usage.log"
+	}
+}
+
+
+task run_gwis_sv {
+
+	File null_modelfile
+	String exposure_names
+	File gdsfile
+	Float min_MAF
+	Float max_MAF
+	Int threads
+	Int memory
+	Int disk
+	Int monitoring_freq
+	
+	command {
+		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
+		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
+
+		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} "" ${min_MAF} ${max_MAF} ${threads}
 	}
 
 	runtime {
@@ -92,7 +126,7 @@ workflow MAGEE {
 	File? kinsfile
 	File? null_modelfile_input
 	Array[File] gdsfiles
-	Array[File] groupfiles
+	Array[File]? groupfiles
 	Float? min_MAF = 0.0000007
 	Float? max_MAF = 0.5
 	Int? threads = 1
@@ -120,33 +154,53 @@ workflow MAGEE {
 	}
 
 	File? null_modelfile = if (defined(null_modelfile_input)) then null_modelfile_input else run_null_model.null_model
+	String run_type = if defined(groupfiles) then "agg" else "sv"  # If groupfiles is defined, run aggregate tests, otherwise run single-variant tests
 
-	scatter (filepair in zip(gdsfiles, groupfiles)) {
-		call run_gwis {
-			input:
-				null_modelfile = null_modelfile,
-				exposure_names = exposure_names,
-				gdsfile = filepair.left,
-				groupfile = filepair.right,
-				min_MAF = min_MAF,
-				max_MAF = max_MAF,
-				threads = threads,
-				memory = memory,
-				disk = disk,
-				monitoring_freq = monitoring_freq
+	if (run_type == "agg") {  
+		scatter (i in range(length(gdsfiles))) {
+			call run_gwis_agg {
+				input:
+					null_modelfile = null_modelfile,
+					exposure_names = exposure_names,
+					gdsfile = gdsfiles[i],
+					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array
+					min_MAF = min_MAF,
+					max_MAF = max_MAF,
+					threads = threads,
+					memory = memory,
+					disk = disk,
+					monitoring_freq = monitoring_freq
+			}
+		}
+	}
+
+	if (run_type == "sv") {  
+		scatter (i in range(length(gdsfiles))) {
+			call run_gwis_sv {
+				input:
+					null_modelfile = null_modelfile,
+					exposure_names = exposure_names,
+					gdsfile = gdsfiles[i],
+					min_MAF = min_MAF,
+					max_MAF = max_MAF,
+					threads = threads,
+					memory = memory,
+					disk = disk,
+					monitoring_freq = monitoring_freq
+			}
 		}
 	}
 
 	call cat_results {
 		input:
-			results_array = run_gwis.res
+			results_array = if run_type == "agg" then run_gwis_agg.res else run_gwis_sv.res
 	}
-
+	
 	output {
 		File? magee_null_model = null_modelfile
 		File magee_results = cat_results.all_results
-		Array[File] system_resource_usage = run_gwis.system_resource_usage
-		Array[File] process_resource_usage = run_gwis.process_resource_usage
+		Array[File]? system_resource_usage = if (run_type == "agg") then run_gwis_agg.system_resource_usage else run_gwis_sv.system_resource_usage
+		Array[File]? process_resource_usage = if (run_type == "agg") then run_gwis_agg.process_resource_usage else run_gwis_sv.process_resource_usage
 	}
 
 	parameter_meta {
@@ -161,7 +215,7 @@ workflow MAGEE {
 		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
-		groupfiles: "Array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
+		groupfiles: "Optional array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight. If this field is not provided, single-variant tests will be performed."
 		min_MAF: "Optional cutoff for the minimum minor allele frequency for variant inclusion (inclusive; default = 1e-7)."
 		max_MAF: "Optional cutoff for the maximum minor allele frequency for variant inclusion (inclusive; default = 0.5)."
 		threads: "Optional number of compute cores to be requested and used for multi-threading during the genome-wide scan (default = 1)."
