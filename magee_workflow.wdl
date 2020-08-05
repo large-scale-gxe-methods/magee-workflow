@@ -33,6 +33,8 @@ task run_gwis {
 	String exposure_names
 	File gdsfile
 	File groupfile
+	Float min_MAF
+	Float max_MAF
 	Int threads
 	Int memory
 	Int disk
@@ -42,7 +44,7 @@ task run_gwis {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${threads}
+		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads}
 	}
 
 	runtime {
@@ -91,6 +93,8 @@ workflow MAGEE {
 	File? null_modelfile_input
 	Array[File] gdsfiles
 	Array[File] groupfiles
+	Float? min_MAF = 0.0000007
+	Float? max_MAF = 0.5
 	Int? threads = 1
 	Int? memory = 10
 	Int? disk = 50
@@ -124,6 +128,8 @@ workflow MAGEE {
 				exposure_names = exposure_names,
 				gdsfile = filepair.left,
 				groupfile = filepair.right,
+				min_MAF = min_MAF,
+				max_MAF = max_MAF,
 				threads = threads,
 				memory = memory,
 				disk = disk,
@@ -156,6 +162,8 @@ workflow MAGEE {
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
 		groupfiles: "Array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight."
+		min_MAF: "Optional cutoff for the minimum minor allele frequency for variant inclusion (inclusive; default = 1e-7)."
+		max_MAF: "Optional cutoff for the maximum minor allele frequency for variant inclusion (inclusive; default = 0.5)."
 		threads: "Optional number of compute cores to be requested and used for multi-threading during the genome-wide scan (default = 1)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."

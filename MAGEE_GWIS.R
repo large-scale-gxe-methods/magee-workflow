@@ -10,7 +10,9 @@ null_modelfile <- args[1]
 exposure_names <- args[2]
 gdsfile <- args[3]
 groupfile <- args[4]
-ncores <- as.integer(args[5])
+min_MAF <- as.numeric(args[5])
+max_MAF <- as.numeric(args[6])
+ncores <- as.integer(args[7])
 
 # Read in null model object
 null_model <- readRDS(null_modelfile)
@@ -25,6 +27,12 @@ if (grepl("group", readLines(groupfile, n=1))) {
 }
 
 # Run GWIS
-res <- MAGEE(null_model, interaction=exposures, gdsfile, groupfile, 
-	     tests=c("JV", "JF", "JD"), ncores=ncores)
-write_delim(res, "magee_res", delim=" ")
+if (groupfile == "") {
+  glmm.gei(null_model, interaction=exposures, geno.file=gdsfile, ncores=ncores,
+	   outfile="magee_res", MAF.range=c(min_MAF, max_MAF))
+} else {
+  res <- MAGEE(null_model, interaction=exposures, gdsfile, groupfile, 
+  	       MAF.range=c(min_MAF, max_MAF), tests=c("JV", "JF", "JD"), 
+	       ncores=ncores)
+  write_delim(res, "magee_res", delim=" ")
+}

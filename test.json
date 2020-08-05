@@ -8,7 +8,7 @@
   "MAGEE.kinsfile": "testfiles/GRM.rds",
   "MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
   "MAGEE.groupfiles": ["testfiles/SetID.withweights.txt", "testfiles/SetID.withweights.txt"],
-  "MAGEE.groupfile_delimiter": "\t",
+  "MAGEE.max_MAF": "0.05",
   "MAGEE.threads": "2",
   "MAGEE.memory": "1",
   "MAGEE.disk": "1"
