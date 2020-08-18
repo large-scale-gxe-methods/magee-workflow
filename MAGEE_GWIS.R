@@ -31,10 +31,10 @@ if (groupfile != "") {
 # Run GWIS
 if (groupfile == "") {
   glmm.gei(null_model, interaction=exposures, geno.file=gdsfile, ncores=ncores,
-	   outfile="magee_res", MAF.range=c(min_MAF, max_MAF))
+	   outfile="magee_res", MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05)
 } else {
   res <- MAGEE(null_model, interaction=exposures, gdsfile, groupfile, 
-  	       MAF.range=c(min_MAF, max_MAF), tests=c("JV", "JF", "JD"), 
-	       ncores=ncores)
+  	       MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05, 
+	       tests=c("JV", "JF", "JD"), ncores=ncores)
   write_delim(res, "magee_res", delim=" ")
 }
