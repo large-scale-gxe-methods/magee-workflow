@@ -12,9 +12,9 @@ task run_null_model {
 	Int memory
 	Int disk
 
-	command {
+	command <<<
 		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}"
-	}
+	>>>
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
@@ -38,20 +38,22 @@ task run_gwis_agg {
 	Int threads
 	Int memory
 	Int disk
+	Int preemptible
 	Int monitoring_freq
 	
-	command {
+	command <<<
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
 		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads}
-	}
+	>>>
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
+		preemptible: "${preemptible}"
 	}
 
 	output {
@@ -72,20 +74,22 @@ task run_gwis_sv {
 	Int threads
 	Int memory
 	Int disk
+	Int preemptible
 	Int monitoring_freq
 	
-	command {
+	command <<<
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
 		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} "" ${min_MAF} ${max_MAF} ${threads}
-	}
+	>>>
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
+		preemptible: "${preemptible}"
 	}
 
 	output {
@@ -99,10 +103,10 @@ task cat_results {
 
 	Array[File] results_array
 
-	command {
+	command <<<
 		head -1 ${results_array[0]} > all_results.txt && \
 			for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
-	}
+	>>>
 	
 	runtime {
 		docker: "ubuntu:latest"
@@ -132,6 +136,7 @@ workflow MAGEE {
 	Int? threads = 1
 	Int? memory = 10
 	Int? disk = 50
+	Int? preemptible = 0
 	Int? monitoring_freq = 1
 
 	#Int null_memory = 2 * ceil(size(kinsfile, "GB")) + 5
@@ -169,6 +174,7 @@ workflow MAGEE {
 					threads = threads,
 					memory = memory,
 					disk = disk,
+					preemptible = preemptible,
 					monitoring_freq = monitoring_freq
 			}
 		}
@@ -186,6 +192,7 @@ workflow MAGEE {
 					threads = threads,
 					memory = memory,
 					disk = disk,
+					preemptible = preemptible,
 					monitoring_freq = monitoring_freq
 			}
 		}
@@ -221,6 +228,7 @@ workflow MAGEE {
 		threads: "Optional number of compute cores to be requested and used for multi-threading during the genome-wide scan (default = 1)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
+		preemptible: "Optional number of attempts using a preemptible machine from Google Cloud prior to falling back to a standard machine (default = 0, i.e., don't use preemptible)."
 		monitoring_freq: "Delay between each output for process monitoring (in seconds). Default is 1 second."
 	}
 
