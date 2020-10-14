@@ -17,7 +17,7 @@ task run_null_model {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
@@ -49,7 +49,7 @@ task run_gwis_agg {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -85,7 +85,7 @@ task run_gwis_sv {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
