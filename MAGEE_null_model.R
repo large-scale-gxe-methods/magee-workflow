@@ -14,6 +14,7 @@ covar_names <- args[6]
 delimiter <- args[7]
 missing <- args[8]
 kinsfile <- args[9]
+groups <- args[10]
 
 # Null model formula
 exposures <- strsplit(exposure_names, split=" ")[[1]]
@@ -37,10 +38,14 @@ get_kinship_matrix <- function(kinsfile) {
 }
 k_mat <- get_kinship_matrix(kinsfile)
 
+# Define grouping variable to allow heteroscedastic LMM
+groups <- if (groups != "") groups else NULL
+
 # Choose regression family
 family <- if (binary_outcome) binomial(link="logit") else gaussian(link="identity")
 
 # Fit null model
 model0 <- GMMAT::glmmkin(as.formula(null_model_str), data=phenos, 
-		  	 kins=k_mat, id=sample_id_header, family=family)
+		  	 kins=k_mat, id=sample_id_header, family=family,
+			 groups=groups)
 saveRDS(model0, file="null_model.rds")

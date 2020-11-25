@@ -9,15 +9,16 @@ task run_null_model {
 	String delimiter
 	String missing
 	File? kinsfile
+	String? var_group
 	Int memory
 	Int disk
 
 	command <<<
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}"
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}" "${var_group}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
@@ -32,6 +33,7 @@ task run_gwis_agg {
 	File null_modelfile
 	String exposure_names
 	File gdsfile
+	String? gds_filter
 	File groupfile
 	Float min_MAF
 	Float max_MAF
@@ -45,11 +47,11 @@ task run_gwis_agg {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads}
+		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -69,6 +71,7 @@ task run_gwis_sv {
 	File null_modelfile
 	String exposure_names
 	File gdsfile
+	String? gds_filter
 	Float min_MAF
 	Float max_MAF
 	Int threads
@@ -81,11 +84,11 @@ task run_gwis_sv {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} "" ${min_MAF} ${max_MAF} ${threads}
+		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} "" ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -128,8 +131,10 @@ workflow MAGEE {
 	String? delimiter = ","
 	String? missing = "NA"
 	File? kinsfile
+	String? var_group
 	File? null_modelfile_input
 	Array[File] gdsfiles
+	String? gds_filter
 	Array[File]? groupfiles
 	Float? min_MAF = 0.0000007
 	Float? max_MAF = 0.5
@@ -168,6 +173,7 @@ workflow MAGEE {
 					null_modelfile = null_modelfile,
 					exposure_names = exposure_names,
 					gdsfile = gdsfiles[i],
+					gds_filter = gds_filter,
 					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array
 					min_MAF = min_MAF,
 					max_MAF = max_MAF,
@@ -187,6 +193,7 @@ workflow MAGEE {
 					null_modelfile = null_modelfile,
 					exposure_names = exposure_names,
 					gdsfile = gdsfiles[i],
+					gds_filter = gds_filter,
 					min_MAF = min_MAF,
 					max_MAF = max_MAF,
 					threads = threads,
@@ -220,8 +227,10 @@ workflow MAGEE {
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
 		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
+		var_group: "Optional string allowing for a heteroscedastic null linear mixed model. If provided, the null model will be fit with differential residual variances for each value of this variable. Note: this is only a valid input for continuous outcomes."
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
+		gds_filter: "Optional space-delimited string of values defining variant filters to be retained for analysis. Currently, this is matched against only the annotation/filter field in the .gds file."
 		groupfiles: "Optional array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight. If this field is not provided, single-variant tests will be performed."
 		min_MAF: "Optional cutoff for the minimum minor allele frequency for variant inclusion (inclusive; default = 1e-7)."
 		max_MAF: "Optional cutoff for the maximum minor allele frequency for variant inclusion (inclusive; default = 0.5)."
