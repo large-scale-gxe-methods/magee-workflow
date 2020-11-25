@@ -6,8 +6,8 @@ RUN Rscript -e 'BiocManager::install(c("SeqArray", "SeqVarTools", "foreach", "GM
 RUN Rscript -e 'install.packages(c("readr", "doMC"))'
 
 # Install MAGEE R package
-COPY MAGEE_0.1.1.tar.gz /MAGEE_0.1.1.tar.gz
-RUN Rscript -e 'install.packages("MAGEE_0.1.1.tar.gz", repos=NULL, type="source")'
+COPY MAGEE_dev.tar.gz /MAGEE_dev.tar.gz
+RUN Rscript -e 'install.packages("MAGEE_dev.tar.gz", repos=NULL, type="source")'
 
 # Copy in R scripts
 COPY MAGEE_null_model.R MAGEE_GWIS.R /
