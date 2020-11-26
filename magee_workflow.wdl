@@ -9,11 +9,12 @@ task run_null_model {
 	String delimiter
 	String missing
 	File? kinsfile
+	String? var_group
 	Int memory
 	Int disk
 
 	command <<<
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}"
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}" "${var_group}"
 	>>>
 
 	runtime {
@@ -128,6 +129,7 @@ workflow MAGEE {
 	String? delimiter = ","
 	String? missing = "NA"
 	File? kinsfile
+	String? var_group
 	File? null_modelfile_input
 	Array[File] gdsfiles
 	Array[File]? groupfiles
@@ -153,6 +155,7 @@ workflow MAGEE {
 				delimiter = delimiter,
 				missing = missing,
 				kinsfile = kinsfile,
+				var_group = var_group,
 				memory = memory,
 				disk = disk
 		}
