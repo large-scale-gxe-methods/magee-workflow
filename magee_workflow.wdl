@@ -8,13 +8,13 @@ task run_null_model {
 	String? covar_names
 	String delimiter
 	String missing
-	File? kinsfile
+	Array[File]? kinsfiles
 	String? var_group
 	Int memory
 	Int disk
 
 	command <<<
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}" "${var_group}"
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${sep=' ' kinsfiles}" "${var_group}"
 	>>>
 
 	runtime {
@@ -130,7 +130,7 @@ workflow MAGEE {
 	String? covar_names
 	String? delimiter = ","
 	String? missing = "NA"
-	File? kinsfile
+	Array[File]? kinsfiles
 	String? var_group
 	File? null_modelfile_input
 	Array[File] gdsfiles
@@ -144,7 +144,7 @@ workflow MAGEE {
 	Int? preemptible = 0
 	Int? monitoring_freq = 1
 
-	#Int null_memory = 2 * ceil(size(kinsfile, "GB")) + 5
+	#Int null_memory = 2 * ceil(size(kinsfiles, "GB")) + 5
 
 	if (!defined(null_modelfile_input)) {
 		call run_null_model {
@@ -157,7 +157,7 @@ workflow MAGEE {
 				covar_names = covar_names,
 				delimiter = delimiter,
 				missing = missing,
-				kinsfile = kinsfile,
+				kinsfiles = kinsfiles,
 				memory = memory,
 				disk = disk
 		}
@@ -226,7 +226,7 @@ workflow MAGEE {
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
-		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
+		kinsfiles: "Optional array of paths to files containing relationship matrices to be used as random effects in the null model. Sample IDs should be used as the row and column names. This input will usually be a single GRM/kinship matrix. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
 		var_group: "Optional string allowing for a heteroscedastic null linear mixed model. If provided, the null model will be fit with differential residual variances for each value of this variable. Note: this is only a valid input for continuous outcomes."
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
@@ -244,6 +244,6 @@ workflow MAGEE {
         meta {
                 author: "Kenny Westerman"
                 email: "kewesterman@mgh.harvard.edu"
-                description: "Run aggregate and single-variant interaction tests using MAGEE and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
+                description: "Run aggregate and single-variant interaction tests using the MAGEE package and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
         }
 }

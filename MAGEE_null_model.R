@@ -1,5 +1,4 @@
 library(readr)
-library(MAGEE)
 
 
 # Parse arguments
@@ -13,7 +12,7 @@ exposure_names <- args[5]
 covar_names <- args[6]
 delimiter <- args[7]
 missing <- args[8]
-kinsfile <- args[9]
+kinsfiles <- args[9]
 groups <- args[10]
 
 # Null model formula
@@ -36,7 +35,8 @@ get_kinship_matrix <- function(kinsfile) {
     as.matrix(read.csv(kinsfile, as.is=T, check.names=F, row.names=1))
   }
 }
-k_mat <- get_kinship_matrix(kinsfile)
+kinsfile_vec <- strsplit(kinsfiles, split=" ")[[1]]
+k_mats <- if (length(kinsfile_vec) == 0) NULL else lapply(kinsfile_vec, get_kinship_matrix)
 
 # Define grouping variable to allow heteroscedastic LMM
 groups <- if (groups != "") groups else NULL
@@ -46,6 +46,6 @@ family <- if (binary_outcome) binomial(link="logit") else gaussian(link="identit
 
 # Fit null model
 model0 <- GMMAT::glmmkin(as.formula(null_model_str), data=phenos, 
-		  	 kins=k_mat, id=sample_id_header, family=family,
+		  	 kins=k_mats, id=sample_id_header, family=family,
 			 groups=groups)
 saveRDS(model0, file="null_model.rds")
