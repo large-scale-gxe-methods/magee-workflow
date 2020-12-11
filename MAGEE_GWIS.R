@@ -36,7 +36,7 @@ if (gds_filter == "") {  # No filter -> pass filename
 } else {  # Yes filter -> pass filtered GDS object
   keep_filter <- strsplit(gds_filter, split=" ")[[1]]
   gds <- SeqArray::seqOpen(gdsfile)
-  keep_idx <- SeqArray::seqGetData(gds, "annotation/info") %in% keep_filter
+  keep_idx <- SeqArray::seqGetData(gds, "annotation/filter") %in% keep_filter
   SeqArray::seqSetFilter(gds, variant.sel=keep_idx)
 }
 
