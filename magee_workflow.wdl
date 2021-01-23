@@ -113,7 +113,7 @@ task cat_results {
 	
 	runtime {
 		docker: "ubuntu:latest"
-		disks: "local-disk 10 HDD"
+		disks: "local-disk 25 HDD"
 	}
 	output {
 		File all_results = "all_results.txt"
