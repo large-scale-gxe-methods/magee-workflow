@@ -177,7 +177,8 @@ task run_gwis_agg {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} "${gds_filter}"
+		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
@@ -214,7 +215,7 @@ task run_gwis_sv {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} "" ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+		Rscript /MAGEE_SV_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
