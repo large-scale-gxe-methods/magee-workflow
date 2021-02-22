@@ -5,7 +5,7 @@
   "MAGEE.binary_outcome": "true",
   "MAGEE.exposure_names": "sex age",
   "MAGEE.covar_names": "cov1",
-  "MAGEE.kinsfile": "testfiles/GRM.rds",
+  "MAGEE.kinsfiles": ["testfiles/GRM.rds"],
   "MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
   "MAGEE.groupfiles": ["testfiles/SetID.withweights.txt", "testfiles/SetID.withweights.txt"],
   "MAGEE.max_MAF": "0.05",

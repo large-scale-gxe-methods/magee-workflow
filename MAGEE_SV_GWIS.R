@@ -6,11 +6,19 @@ Sys.setenv(MKL_NUM_THREADS=1)
 # Parse arguments
 args <- commandArgs(T)
 
-gdsfile <- args[1]
-min_MAF <- as.numeric(args[2])
-max_MAF <- as.numeric(args[3])
-ncores <- as.integer(args[4])
-gds_filter <- args[5]
+null_modelfile <- args[1]
+exposure_names <- args[2]
+gdsfile <- args[3]
+min_MAF <- as.numeric(args[4])
+max_MAF <- as.numeric(args[5])
+ncores <- as.integer(args[6])
+gds_filter <- args[7]
+
+# Read in null model object
+null_model <- readRDS(null_modelfile)
+
+# Parse exposures
+exposures <- strsplit(exposure_names, split=" ")[[1]]
 
 # Apply gds filter if provided 
 # (currently only string matches in "annotation/filter")
@@ -24,8 +32,5 @@ if (gds_filter == "") {  # No filter -> pass filename
 }
 
 # Run GWIS
-prep <- readRDS("magee_prep.rds")  # From MAGEE_prep.R script
-prep$geno.file <- gds  # Hack for now: replace GDS object with subsetted version
-res <- MAGEE.lowmem(prep, MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05, 
-       		    tests=c("JV", "JF", "JD"), ncores=ncores)
-write_delim(res, "magee_res", delim=" ")
+glmm.gei(null_model, interaction=exposures, geno.file=gds, ncores=ncores,
+	 outfile="magee_res", MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05)

@@ -1,123 +1,3 @@
-task run_null_model {
-
-	File phenofile
-	String sample_id_header
-	String outcome
-	Boolean binary_outcome
-	String exposure_names
-	String? covar_names
-	String delimiter
-	String missing
-	File? kinsfile
-	String? var_group
-	Int memory
-	Int disk
-
-	command <<<
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${kinsfile}" "${var_group}"
-	>>>
-
-	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-	}
-
-	output {
-		File null_model = "null_model.rds"
-	}
-}
-
-task run_gwis_agg {
-
-	File null_modelfile
-	String exposure_names
-	File gdsfile
-	File groupfile
-	Float min_MAF
-	Float max_MAF
-	Int threads
-	Int memory
-	Int disk
-	Int preemptible
-	Int monitoring_freq
-	
-	command <<<
-		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
-		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
-
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} ${min_MAF} ${max_MAF} ${threads}
-	>>>
-
-	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
-		memory: "${memory} GB"
-		cpu: "${threads}"
-		disks: "local-disk ${disk} HDD"
-		preemptible: "${preemptible}"
-	}
-
-	output {
-		File res = "magee_res"
-		File system_resource_usage = "system_resource_usage.log"
-		File process_resource_usage = "process_resource_usage.log"
-	}
-}
-
-
-task run_gwis_sv {
-
-	File null_modelfile
-	String exposure_names
-	File gdsfile
-	Float min_MAF
-	Float max_MAF
-	Int threads
-	Int memory
-	Int disk
-	Int preemptible
-	Int monitoring_freq
-	
-	command <<<
-		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
-		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
-
-		Rscript /MAGEE_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} "" ${min_MAF} ${max_MAF} ${threads}
-	>>>
-
-	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
-		memory: "${memory} GB"
-		cpu: "${threads}"
-		disks: "local-disk ${disk} HDD"
-		preemptible: "${preemptible}"
-	}
-
-	output {
-		File res = "magee_res"
-		File system_resource_usage = "system_resource_usage.log"
-		File process_resource_usage = "process_resource_usage.log"
-	}
-}
-
-task cat_results {
-
-	Array[File] results_array
-
-	command <<<
-		head -1 ${results_array[0]} > all_results.txt && \
-			for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
-	>>>
-	
-	runtime {
-		docker: "ubuntu:latest"
-		disks: "local-disk 10 HDD"
-	}
-	output {
-		File all_results = "all_results.txt"
-	}
-}
-
 workflow MAGEE {
 
 	File phenofile
@@ -128,10 +8,11 @@ workflow MAGEE {
 	String? covar_names
 	String? delimiter = ","
 	String? missing = "NA"
-	File? kinsfile
+	Array[File]? kinsfiles
 	String? var_group
 	File? null_modelfile_input
 	Array[File] gdsfiles
+	String? gds_filter
 	Array[File]? groupfiles
 	Float? min_MAF = 0.0000007
 	Float? max_MAF = 0.5
@@ -141,7 +22,7 @@ workflow MAGEE {
 	Int? preemptible = 0
 	Int? monitoring_freq = 1
 
-	#Int null_memory = 2 * ceil(size(kinsfile, "GB")) + 5
+	#Int null_memory = 2 * ceil(size(kinsfiles, "GB")) + 5
 
 	if (!defined(null_modelfile_input)) {
 		call run_null_model {
@@ -154,8 +35,7 @@ workflow MAGEE {
 				covar_names = covar_names,
 				delimiter = delimiter,
 				missing = missing,
-				kinsfile = kinsfile,
-				var_group = var_group,
+				kinsfiles = kinsfiles,
 				memory = memory,
 				disk = disk
 		}
@@ -171,6 +51,7 @@ workflow MAGEE {
 					null_modelfile = null_modelfile,
 					exposure_names = exposure_names,
 					gdsfile = gdsfiles[i],
+					gds_filter = gds_filter,
 					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array
 					min_MAF = min_MAF,
 					max_MAF = max_MAF,
@@ -190,6 +71,7 @@ workflow MAGEE {
 					null_modelfile = null_modelfile,
 					exposure_names = exposure_names,
 					gdsfile = gdsfiles[i],
+					gds_filter = gds_filter,
 					min_MAF = min_MAF,
 					max_MAF = max_MAF,
 					threads = threads,
@@ -222,9 +104,11 @@ workflow MAGEE {
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
-		kinsfile: "Optional path to file containing GRM/kinship matrix with sample IDs as the row and column names. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
+		kinsfiles: "Optional array of paths to files containing relationship matrices to be used as random effects in the null model. Sample IDs should be used as the row and column names. This input will usually be a single GRM/kinship matrix. Can be either a .rds file storing a matrix object or a .csv file. If excluded, a the null model will be fit as a GLM with no random effects."
+		var_group: "Optional string allowing for a heteroscedastic null linear mixed model. If provided, the null model will be fit with differential residual variances for each value of this variable. Note: this is only a valid input for continuous outcomes."
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
+		gds_filter: "Optional space-delimited string of values defining variant filters to be retained for analysis. Currently, this is matched against only the annotation/filter field in the .gds file."
 		groupfiles: "Optional array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight. If this field is not provided, single-variant tests will be performed."
 		min_MAF: "Optional cutoff for the minimum minor allele frequency for variant inclusion (inclusive; default = 1e-7)."
 		max_MAF: "Optional cutoff for the maximum minor allele frequency for variant inclusion (inclusive; default = 0.5)."
@@ -238,6 +122,133 @@ workflow MAGEE {
         meta {
                 author: "Kenny Westerman"
                 email: "kewesterman@mgh.harvard.edu"
-                description: "Run aggregate and single-variant interaction tests using MAGEE and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
+                description: "Run aggregate and single-variant interaction tests using the MAGEE package and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
         }
+}
+
+
+task run_null_model {
+
+	File phenofile
+	String sample_id_header
+	String outcome
+	Boolean binary_outcome
+	String exposure_names
+	String? covar_names
+	String delimiter
+	String missing
+	Array[File]? kinsfiles
+	String? var_group
+	Int memory
+	Int disk
+
+	command <<<
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${sep=' ' kinsfiles}" "${var_group}"
+	>>>
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+	}
+
+	output {
+		File null_model = "null_model.rds"
+	}
+}
+
+
+task run_gwis_agg {
+
+	File null_modelfile
+	String exposure_names
+	File gdsfile
+	String? gds_filter
+	File groupfile
+	Float min_MAF
+	Float max_MAF
+	Int threads
+	Int memory
+	Int disk
+	Int preemptible
+	Int monitoring_freq
+	
+	command <<<
+		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
+		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
+
+		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} "${gds_filter}"
+		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+	>>>
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		memory: "${memory} GB"
+		cpu: "${threads}"
+		disks: "local-disk ${disk} HDD"
+		preemptible: "${preemptible}"
+	}
+
+	output {
+		File res = "magee_res"
+		File system_resource_usage = "system_resource_usage.log"
+		File process_resource_usage = "process_resource_usage.log"
+	}
+}
+
+
+task run_gwis_sv {
+
+	File null_modelfile
+	String exposure_names
+	File gdsfile
+	String? gds_filter
+	Float min_MAF
+	Float max_MAF
+	Int threads
+	Int memory
+	Int disk
+	Int preemptible
+	Int monitoring_freq
+	
+	command <<<
+		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
+		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
+
+		Rscript /MAGEE_SV_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+	>>>
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		memory: "${memory} GB"
+		cpu: "${threads}"
+		disks: "local-disk ${disk} HDD"
+		preemptible: "${preemptible}"
+	}
+
+	output {
+		File res = "magee_res"
+		File system_resource_usage = "system_resource_usage.log"
+		File process_resource_usage = "process_resource_usage.log"
+	}
+}
+
+
+task cat_results {
+
+	Array[File] results_array
+
+	command <<<
+		head -1 ${results_array[0]} > all_results.txt && \
+			for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
+	>>>
+	
+	runtime {
+		docker: "ubuntu:latest"
+		disks: "local-disk 25 HDD"
+	}
+
+	output {
+		File all_results = "all_results.txt"
+	}
 }
