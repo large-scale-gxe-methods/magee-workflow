@@ -83,16 +83,17 @@ workflow MAGEE {
 		}
 	}
 
-	call cat_results {
-		input:
-			results_array = if run_type == "agg" then run_gwis_agg.res else run_gwis_sv.res
-	}
+	#call cat_results {
+	#	input:
+	#		results_array = if run_type == "agg" then run_gwis_agg.res else run_gwis_sv.res
+	#}
 	
 	output {
 		File? magee_null_model = null_modelfile
-		File magee_results = cat_results.all_results
-		Array[File]? system_resource_usage = if (run_type == "agg") then run_gwis_agg.system_resource_usage else run_gwis_sv.system_resource_usage
-		Array[File]? process_resource_usage = if (run_type == "agg") then run_gwis_agg.process_resource_usage else run_gwis_sv.process_resource_usage
+		Array[File]? magee_prep = run_gwis_agg.prep
+		#File magee_results = cat_results.all_results
+		#Array[File]? system_resource_usage = if (run_type == "agg") then run_gwis_agg.system_resource_usage else run_gwis_sv.system_resource_usage
+		#Array[File]? process_resource_usage = if (run_type == "agg") then run_gwis_agg.process_resource_usage else run_gwis_sv.process_resource_usage
 	}
 
 	parameter_meta {
@@ -147,7 +148,7 @@ task run_null_model {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 	}
@@ -178,11 +179,11 @@ task run_gwis_agg {
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
 		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} "${gds_filter}"
-		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+		#Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -190,9 +191,10 @@ task run_gwis_agg {
 	}
 
 	output {
-		File res = "magee_res"
-		File system_resource_usage = "system_resource_usage.log"
-		File process_resource_usage = "process_resource_usage.log"
+		File prep = "magee_prep.rds"
+		#File res = "magee_res"
+		#File system_resource_usage = "system_resource_usage.log"
+		#File process_resource_usage = "process_resource_usage.log"
 	}
 }
 
@@ -219,7 +221,7 @@ task run_gwis_sv {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow:debug"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"

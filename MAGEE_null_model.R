@@ -41,9 +41,6 @@ k_mats <- if (length(kinsfile_vec) == 0) NULL else lapply(kinsfile_vec, get_kins
 # Define grouping variable to allow heteroscedastic LMM
 groups <- if (groups != "") groups else NULL
 
-# Define grouping variable to allow heteroscedastic LMM
-groups <- if (groups != "") groups else NULL
-
 # Choose regression family
 family <- if (binary_outcome) binomial(link="logit") else gaussian(link="identity")
 
