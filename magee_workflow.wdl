@@ -179,7 +179,7 @@ task run_gwis_agg {
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
 		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} "${gds_filter}"
-		#Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
@@ -192,7 +192,7 @@ task run_gwis_agg {
 
 	output {
 		File prep = "magee_prep.rds"
-		#File res = "magee_res"
+		File res = "magee_res"
 		#File system_resource_usage = "system_resource_usage.log"
 		#File process_resource_usage = "process_resource_usage.log"
 	}
