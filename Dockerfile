@@ -7,8 +7,7 @@ RUN Rscript -e 'install.packages(c("readr", "doMC", "devtools"), repos="http://c
 
 # Install MAGEE R package
 ADD https://api.github.com/repos/xwang21/MAGEE/git/refs/heads version.json
-COPY MAGEE_dev.tar.gz /MAGEE_dev.tar.gz
-RUN Rscript -e 'install.packages("MAGEE_dev.tar.gz", repos=NULL, type="source")'
+RUN Rscript -e 'devtools::install_github("https://github.com/xwang21/MAGEE/tree/dev")'
 
 # Copy in R scripts
 COPY MAGEE_null_model.R MAGEE_prep.R MAGEE_GWIS.R MAGEE_SV_GWIS.R /
