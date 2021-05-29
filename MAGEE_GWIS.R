@@ -11,6 +11,7 @@ min_MAF <- as.numeric(args[2])
 max_MAF <- as.numeric(args[3])
 ncores <- as.integer(args[4])
 gds_filter <- args[5]
+meta_file_prefix <- args[6]
 
 # Apply gds filter if provided 
 # (currently only string matches in "annotation/filter")
@@ -23,9 +24,12 @@ if (gds_filter == "") {  # No filter -> pass filename
   SeqArray::seqSetFilter(gds, variant.sel=keep_idx)
 }
 
+# Establish meta-analysis file prefix if there is one
+mfp <- if (!(meta_file_prefix == "none")) meta_file_prefix else NULL
+
 # Run GWIS
 prep <- readRDS("magee_prep.rds")  # From MAGEE_prep.R script
 prep$geno.file <- gds  # Hack for now: replace GDS object with subsetted version
 res <- MAGEE.lowmem(prep, MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05, 
-       		    tests=c("JV", "JF", "JD"), ncores=ncores)
+       		    tests=c("JV", "JF", "JD"), ncores=ncores, meta.file.prefix=mfp)
 write_delim(res, "magee_res", delim=" ")

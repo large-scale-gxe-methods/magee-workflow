@@ -14,8 +14,9 @@ workflow MAGEE {
 	Array[File] gdsfiles
 	String? gds_filter
 	Array[File]? groupfiles
-	Float? min_MAF = 0.0000007
+	Float? min_MAF = 0.0000001
 	Float? max_MAF = 0.5
+	String? meta_file_prefix = "none"
 	Int? threads = 1
 	Int? memory = 10
 	Int? disk = 50
@@ -55,6 +56,7 @@ workflow MAGEE {
 					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array
 					min_MAF = min_MAF,
 					max_MAF = max_MAF,
+					meta_file_prefix = meta_file_prefix,
 					threads = threads,
 					memory = memory,
 					disk = disk,
@@ -91,6 +93,7 @@ workflow MAGEE {
 	output {
 		File? magee_null_model = null_modelfile
 		File magee_results = cat_results.all_results
+		Array[Array[File]]? meta_analysis_output = if (run_type == "agg") then run_gwis_agg.meta_file else [[]]
 		Array[File]? system_resource_usage = if (run_type == "agg") then run_gwis_agg.system_resource_usage else run_gwis_sv.system_resource_usage
 		Array[File]? process_resource_usage = if (run_type == "agg") then run_gwis_agg.process_resource_usage else run_gwis_sv.process_resource_usage
 	}
@@ -112,6 +115,7 @@ workflow MAGEE {
 		groupfiles: "Optional array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight. If this field is not provided, single-variant tests will be performed."
 		min_MAF: "Optional cutoff for the minimum minor allele frequency for variant inclusion (inclusive; default = 1e-7)."
 		max_MAF: "Optional cutoff for the maximum minor allele frequency for variant inclusion (inclusive; default = 0.5)."
+		meta_file_prefix: "Optional string to use as the prefix for writing the the proper summary statistics and covariance matrix for meta-analysis. If excluded, this file will not be created."
 		threads: "Optional number of compute cores to be requested and used for multi-threading during the genome-wide scan (default = 1)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
@@ -167,6 +171,7 @@ task run_gwis_agg {
 	File groupfile
 	Float min_MAF
 	Float max_MAF
+	String meta_file_prefix
 	Int threads
 	Int memory
 	Int disk
@@ -178,7 +183,7 @@ task run_gwis_agg {
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
 		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} "${gds_filter}"
-		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}" "${meta_file_prefix}"
 	>>>
 
 	runtime {
@@ -191,6 +196,7 @@ task run_gwis_agg {
 
 	output {
 		File res = "magee_res"
+		Array[File] meta_file = glob("${meta_file_prefix}.*")
 		File system_resource_usage = "system_resource_usage.log"
 		File process_resource_usage = "process_resource_usage.log"
 	}
