@@ -33,4 +33,5 @@ if (gds_filter == "") {  # No filter -> pass filename
 
 # Run GWIS
 glmm.gei(null_model, interaction=exposures, geno.file=gds, ncores=ncores,
-	 outfile="magee_res", MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05)
+	 outfile="magee_res", MAF.range=c(min_MAF, max_MAF), 
+	 miss.cutoff=0.05, meta.output=TRUE)
