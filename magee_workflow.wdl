@@ -236,6 +236,7 @@ task run_gwis_sv {
 		File res = "magee_res"
 		File system_resource_usage = "system_resource_usage.log"
 		File process_resource_usage = "process_resource_usage.log"
+		File debug_variant_file = "glmmgei_debug.out"
 	}
 }
 
