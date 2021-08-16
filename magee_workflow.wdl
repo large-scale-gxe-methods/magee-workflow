@@ -154,6 +154,7 @@ task run_null_model {
 		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+		maxRetries: 2
 	}
 
 	output {
@@ -192,6 +193,7 @@ task run_gwis_agg {
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
 		preemptible: "${preemptible}"
+		maxRetries: 2
 	}
 
 	output {
@@ -230,6 +232,7 @@ task run_gwis_sv {
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
 		preemptible: "${preemptible}"
+		maxRetries: 2
 	}
 
 	output {
