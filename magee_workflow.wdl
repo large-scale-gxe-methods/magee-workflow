@@ -1,4 +1,4 @@
-workflow MAGEE {
+workflow run_MAGEE {
 
 	File phenofile
 	String? sample_id_header = "sampleID"
