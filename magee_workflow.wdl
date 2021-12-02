@@ -37,6 +37,7 @@ workflow MAGEE {
 				delimiter = delimiter,
 				missing = missing,
 				kinsfiles = kinsfiles,
+				var_group = var_group,
 				memory = memory,
 				disk = disk
 		}
@@ -123,11 +124,11 @@ workflow MAGEE {
 		monitoring_freq: "Delay between each output for process monitoring (in seconds). Default is 1 second."
 	}
 
-        meta {
-                author: "Kenny Westerman"
-                email: "kewesterman@mgh.harvard.edu"
-                description: "Run aggregate and single-variant interaction tests using the MAGEE package and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
-        }
+	meta {
+		author: "Kenny Westerman"
+		email: "kewesterman@mgh.harvard.edu"
+		description: "Run aggregate and single-variant interaction tests using the MAGEE package and return a table of summary statistics for K-DF interaction and (K+1)-DF joint tests."
+	}
 }
 
 
@@ -250,7 +251,7 @@ task cat_results {
 
 	command <<<
 		head -1 ${results_array[0]} > all_results.txt && \
-			for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
+						for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
 	>>>
 	
 	runtime {
