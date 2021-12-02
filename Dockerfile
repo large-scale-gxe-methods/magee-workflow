@@ -6,8 +6,8 @@ RUN Rscript -e 'BiocManager::install(c("SeqArray", "SeqVarTools", "foreach", "GM
 RUN Rscript -e 'install.packages(c("readr", "doMC", "devtools"), repos="http://cran.us.r-project.org")'
 
 # Install MAGEE R package
-ADD https://api.github.com/repos/xwang21/MAGEE/git/refs/heads version.json
-RUN Rscript -e 'devtools::install_github("https://github.com/xwang21/MAGEE/tree/dev")'
+ADD https://api.github.com/repos/large-scale-gxe-methods/MAGEE/git/refs/heads version.json
+RUN Rscript -e 'devtools::install_github("https://github.com/large-scale-gxe-methods/MAGEE")'
 
 # Copy in R scripts
 COPY MAGEE_null_model.R MAGEE_prep.R MAGEE_GWIS.R MAGEE_SV_GWIS.R /
