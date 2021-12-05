@@ -152,7 +152,7 @@ task run_null_model {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:18d7be67fcc3df07f677ee29cfda9b9a9e45545c3b2598423e224e210a44459e"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		maxRetries: 2
@@ -189,7 +189,7 @@ task run_gwis_agg {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:18d7be67fcc3df07f677ee29cfda9b9a9e45545c3b2598423e224e210a44459e"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -228,7 +228,7 @@ task run_gwis_sv {
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow:dev"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:18d7be67fcc3df07f677ee29cfda9b9a9e45545c3b2598423e224e210a44459e"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -240,7 +240,6 @@ task run_gwis_sv {
 		File res = "magee_res"
 		File system_resource_usage = "system_resource_usage.log"
 		File process_resource_usage = "process_resource_usage.log"
-		File debug_variant_file = "glmmgei_debug.out"
 	}
 }
 
