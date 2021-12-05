@@ -1,0 +1,15 @@
+{
+  "run_MAGEE.phenofile": "testfiles/phenos.csv",
+  "run_MAGEE.sample_id_header": "id",
+  "run_MAGEE.outcome": "disease",
+  "run_MAGEE.binary_outcome": "true",
+  "run_MAGEE.exposure_names": "sex age",
+  "run_MAGEE.covar_names": "cov1",
+  "run_MAGEE.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
+  "run_MAGEE.groupfiles": ["testfiles/SetID.withweights.txt", "testfiles/SetID.withweights.txt"],
+  "run_MAGEE.max_MAF": "0.05",
+  "run_MAGEE.meta_file_prefix": "my_prefix",
+  "run_MAGEE.threads": "2",
+  "run_MAGEE.memory": "1",
+  "run_MAGEE.disk": "1"
+}

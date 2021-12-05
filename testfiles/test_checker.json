@@ -1,0 +1,14 @@
+{
+  "checker.phenofile": "testfiles/phenos.csv",
+  "checker.sample_id_header": "id",
+  "checker.outcome": "disease",
+  "checker.binary_outcome": "true",
+  "checker.exposure_names": "sex age",
+  "checker.covar_names": "cov1",
+  "checker.kinsfiles": ["testfiles/GRM.rds"],
+  "checker.gdsfiles": ["testfiles/geno.gds", "testfiles/geno.gds"],
+  "checker.groupfiles": ["testfiles/SetID.withweights.txt", "testfiles/SetID.withweights.txt"],
+  "checker.max_MAF": 0.05,
+
+  "checker.expected_sumstats": "testfiles/example_output.txt"
+}

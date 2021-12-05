@@ -1,0 +1,7 @@
+version: 1.2
+workflows:
+  - name: magee-workflow
+    subclass: WDL
+    primaryDescriptorPath: /magee_workflow.wdl
+    testParameterFiles: 
+      - testfiles/test.json
