@@ -5,6 +5,7 @@ workflow run_MAGEE {
 	String outcome
 	Boolean binary_outcome
 	String exposure_names
+	String? int_covar_names = ""
 	String? covar_names
 	String? delimiter = ","
 	String? missing = "NA"
@@ -33,6 +34,7 @@ workflow run_MAGEE {
 				outcome = outcome,
 				binary_outcome = binary_outcome,
 				exposure_names = exposure_names,
+				int_covar_names = int_covar_names,
 				covar_names = covar_names,
 				delimiter = delimiter,
 				missing = missing,
@@ -52,6 +54,7 @@ workflow run_MAGEE {
 				input:
 					null_modelfile = null_modelfile,
 					exposure_names = exposure_names,
+					int_covar_names = int_covar_names,
 					gdsfile = gdsfiles[i],
 					gds_filter = gds_filter,
 					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array
@@ -73,6 +76,7 @@ workflow run_MAGEE {
 				input:
 					null_modelfile = null_modelfile,
 					exposure_names = exposure_names,
+					int_covar_names = int_covar_names,
 					gdsfile = gdsfiles[i],
 					gds_filter = gds_filter,
 					min_MAF = min_MAF,
@@ -105,6 +109,7 @@ workflow run_MAGEE {
 		outcome: "Column header name of phenotype data in phenotype file." 
 		binary_outcome: "Boolean: is the outcome binary? Otherwise, quantitative is assumed."
 		exposure_names: "Column header name(s) of the exposures for genotype interaction testing (space-delimited)."
+		int_covar_names: "Column header name(s) of any exposures for which genotype interaction terms should be included as covariates (space-delimited)."
 		covar_names: "Column header name(s) of any covariates for which only main effects should be included selected covariates in the pheno data file (space-delimited). This set should not contain the exposure."
 		delimiter: "Delimiter used in the phenotype file."
 		missing: "Missing value key of phenotype file."
@@ -139,6 +144,7 @@ task run_null_model {
 	String outcome
 	Boolean binary_outcome
 	String exposure_names
+	String int_covar_names
 	String? covar_names
 	String delimiter
 	String missing
@@ -148,11 +154,11 @@ task run_null_model {
 	Int disk
 
 	command <<<
-		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${covar_names}" ${delimiter} ${missing} "${sep=' ' kinsfiles}" "${var_group}"
+		Rscript /MAGEE_null_model.R ${phenofile} ${sample_id_header} ${outcome} ${binary_outcome} "${exposure_names}" "${int_covar_names}" "${covar_names}" ${delimiter} ${missing} "${sep=' ' kinsfiles}" "${var_group}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:18d7be67fcc3df07f677ee29cfda9b9a9e45545c3b2598423e224e210a44459e"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:9b33830ae1665a23ec606f3231888594e8458530e50200c0ddd7e4f42835878a"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		maxRetries: 2
@@ -168,6 +174,7 @@ task run_gwis_agg {
 
 	File null_modelfile
 	String exposure_names
+	String int_covar_names
 	File gdsfile
 	String? gds_filter
 	File groupfile
@@ -184,12 +191,12 @@ task run_gwis_agg {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${groupfile} "${gds_filter}"
+		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" "${int_covar_names}" ${gdsfile} ${groupfile} "${gds_filter}"
 		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}" "${meta_file_prefix}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:18d7be67fcc3df07f677ee29cfda9b9a9e45545c3b2598423e224e210a44459e"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:9b33830ae1665a23ec606f3231888594e8458530e50200c0ddd7e4f42835878a"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -210,6 +217,7 @@ task run_gwis_sv {
 
 	File null_modelfile
 	String exposure_names
+	String int_covar_names
 	File gdsfile
 	String? gds_filter
 	Float min_MAF
@@ -224,11 +232,11 @@ task run_gwis_sv {
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_SV_GWIS.R ${null_modelfile} "${exposure_names}" ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
+		Rscript /MAGEE_SV_GWIS.R ${null_modelfile} "${exposure_names}" "${int_covar_names}" ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}"
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:18d7be67fcc3df07f677ee29cfda9b9a9e45545c3b2598423e224e210a44459e"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:9b33830ae1665a23ec606f3231888594e8458530e50200c0ddd7e4f42835878a"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"

@@ -9,16 +9,18 @@ sample_id_header <- args[2]
 outcome <- args[3]
 binary_outcome <- as.logical(args[4])
 exposure_names <- args[5]
-covar_names <- args[6]
-delimiter <- args[7]
-missing <- args[8]
-kinsfiles <- args[9]
-groups <- args[10]
+int_covar_names <- args[6]
+covar_names <- args[7]
+delimiter <- args[8]
+missing <- args[9]
+kinsfiles <- args[10]
+groups <- args[11]
 
 # Null model formula
 exposures <- strsplit(exposure_names, split=" ")[[1]]
+int_covars <- strsplit(int_covar_names, split=" ")[[1]]
 covars <- strsplit(covar_names, split=" ")[[1]]
-null_model_str <- paste0(outcome, "~", paste(c(exposures, covars), collapse="+"))
+null_model_str <- paste0(outcome, "~", paste(c(exposures, int_covars, covars), collapse="+"))
 
 # Read in phenotypes
 phenos <- as.data.frame(read_delim(phenofile, delim=delimiter, na=missing))
