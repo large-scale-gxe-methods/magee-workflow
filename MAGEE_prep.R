@@ -8,15 +8,17 @@ args <- commandArgs(T)
 
 null_modelfile <- args[1]
 exposure_names <- args[2]
-gdsfile <- args[3]
-groupfile <- args[4]
-gds_filter <- args[5]
+int_covar_names <- args[3]
+gdsfile <- args[4]
+groupfile <- args[5]
+gds_filter <- args[6]
 
 # Read in null model object
 null_model <- readRDS(null_modelfile)
 
 # Parse exposures
 exposures <- strsplit(exposure_names, split=" ")[[1]]
+int_covars <- if (int_covar_names == "") NULL else strsplit(int_covar_names, split=" ")[[1]]
 
 # Remove header from group file if necessary
 if (groupfile != "") {
@@ -38,5 +40,6 @@ if (gds_filter == "") {  # No filter -> pass filename
 }
 
 # Prep GWIS
-prep <- MAGEE.prep(null_model, interaction=exposures, gds, groupfile)
+prep <- MAGEE.prep(null_model, interaction=exposures, gds, groupfile,
+				   interaction.covariates=int_covars)
 saveRDS(prep, "magee_prep.rds")

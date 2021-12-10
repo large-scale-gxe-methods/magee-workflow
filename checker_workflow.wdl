@@ -1,4 +1,4 @@
-# version 1.0.1a
+# version 1.0.1b
 
 import "magee_workflow.wdl" as magee_wf
 
