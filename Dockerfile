@@ -7,7 +7,7 @@ RUN Rscript -e 'install.packages(c("readr", "doMC", "devtools"), repos="http://c
 
 # Install MAGEE R package
 ADD https://api.github.com/repos/large-scale-gxe-methods/MAGEE/git/refs/heads version.json
-RUN Rscript -e 'devtools::install_github("https://github.com/large-scale-gxe-methods/MAGEE/tree/dev")'
+RUN Rscript -e 'devtools::install_github("https://github.com/large-scale-gxe-methods/MAGEE/tree/v1.0.2")'
 
 # Copy in R scripts
 COPY MAGEE_null_model.R MAGEE_prep.R MAGEE_GWIS.R MAGEE_SV_GWIS.R /
