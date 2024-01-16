@@ -4,13 +4,11 @@ workflow run_MAGEE {
 	String? sample_id_header = "sampleID"
 	String outcome
 	Boolean binary_outcome
-	String? exposure_names
-	Boolean? use_minor_allele = false
+	String exposure_names
 	String? int_covar_names = ""
 	String? covar_names
 	String? delimiter = ","
 	String? missing = "NA"
-	String?	AF_strata_range = "0 1"
 	Array[File]? kinsfiles
 	String? var_group
 	File? null_modelfile_input
@@ -19,12 +17,13 @@ workflow run_MAGEE {
 	Array[File]? groupfiles
 	Float? min_MAF = 0.0000001
 	Float? max_MAF = 0.5
-  String? meta_file_prefix = "meta"
+	String? meta_file_prefix = "none"
 	Int? threads = 1
 	Int? memory = 10
 	Int? disk = 50
 	Int? preemptible = 0
 	Int? monitoring_freq = 1
+
 	#Int null_memory = 2 * ceil(size(kinsfiles, "GB")) + 5
 
 	if (!defined(null_modelfile_input)) {
@@ -48,9 +47,7 @@ workflow run_MAGEE {
 
 	File? null_modelfile = if (defined(null_modelfile_input)) then null_modelfile_input else run_null_model.null_model
 	String run_type = if defined(groupfiles) then "agg" else "sv"  # If groupfiles is defined, run aggregate tests, otherwise run single-variant tests
-	
-  
-  
+
 	if (run_type == "agg") {  
 		scatter (i in range(length(gdsfiles))) {
 			call run_gwis_agg {
@@ -60,12 +57,10 @@ workflow run_MAGEE {
 					int_covar_names = int_covar_names,
 					gdsfile = gdsfiles[i],
 					gds_filter = gds_filter,
-					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array 2 2
+					groupfile = select_first([groupfiles])[i],  # select_first mechanism allows indexing of an optional array
 					min_MAF = min_MAF,
 					max_MAF = max_MAF,
-					AF_strata_range = AF_strata_range,
 					meta_file_prefix = meta_file_prefix,
-					use_minor_allele = use_minor_allele,
 					threads = threads,
 					memory = memory,
 					disk = disk,
@@ -94,20 +89,16 @@ workflow run_MAGEE {
 			}
 		}
 	}
-	
+
 	call cat_results {
 		input:
-			results_array = if run_type == "agg" then run_gwis_agg.res else run_gwis_sv.res,
-			meta_analysis_output = if run_type == "agg" then run_gwis_agg.meta_file else [],
-			meta_file_prefix = meta_file_prefix,
-			run_type=run_type
-
+			results_array = if run_type == "agg" then run_gwis_agg.res else run_gwis_sv.res
 	}
 	
 	output {
 		File? magee_null_model = null_modelfile
 		File magee_results = cat_results.all_results
-		Array[File]? meta_analysis_output = if (run_type == "agg") then run_gwis_agg.meta_file else []
+		Array[Array[File]]? meta_analysis_output = if (run_type == "agg") then run_gwis_agg.meta_file else [[]]
 		Array[File]? system_resource_usage = if (run_type == "agg") then run_gwis_agg.system_resource_usage else run_gwis_sv.system_resource_usage
 		Array[File]? process_resource_usage = if (run_type == "agg") then run_gwis_agg.process_resource_usage else run_gwis_sv.process_resource_usage
 	}
@@ -127,21 +118,15 @@ workflow run_MAGEE {
 		null_modelfile: "Optional path to file containing the pre-fitted null model in .rds format."
 		gdsfiles: "Array of genotype filepaths in .gds format."
 		gds_filter: "Optional space-delimited string of values defining variant filters to be retained for analysis. Currently, this is matched against only the annotation/filter field in the .gds file."
-		groupfiles:  "Optional array of variant group definition filepaths. Files should be tab separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight. If this field is not provided, single-variant tests will be performed."
+		groupfiles: "Optional array of variant group definition filepaths. Files should be tab-separated with the following fields: variant set, chromosome, position, reference allele, alternate allele, weight. If this field is not provided, single-variant tests will be performed."
 		min_MAF: "Optional cutoff for the minimum minor allele frequency for variant inclusion (inclusive; default = 1e-7)."
 		max_MAF: "Optional cutoff for the maximum minor allele frequency for variant inclusion (inclusive; default = 0.5)."
-		AF_strata_range: "Numeric vector of length 2 (i.e. '0 1') defining the minimum and maximum coding allele frequencies of variants in each stratum that should be included in the analysis, if the environmental factor is categorical.Default = '0 1'"
-		meta_file_prefix: "Optional string to use as the prefix for writing the the proper summary statistics and covariance matrix for meta-analysis. If excluded, this file will not be created. Default is 'meta'"
-		metafiles: "Array of paths to meta-analysis output files from the run_MAGEE workflow containing summary statistics and covariance matrix for meta-analysis. The names of the files are set by the 'meta_file_prefix' parameter."
-		group_file: "For variant group test: A plain text file with 6 columns defining the test units for aggregate meta analysis. There should be no headers in the file, and the columns are group name, chromosome, position, reference allele, alternative allele and weight, respectively. This file should be matched to the genetic variants in both cohorts. If this field is not provided, single-variant meta-analysis will be performed."
-    group_file_sep: "Delimiter of the group file."
+		meta_file_prefix: "Optional string to use as the prefix for writing the the proper summary statistics and covariance matrix for meta-analysis. If excluded, this file will not be created."
 		threads: "Optional number of compute cores to be requested and used for multi-threading during the genome-wide scan (default = 1)."
 		memory: "Requested memory (in GB)."
 		disk: "Requested disk space (in GB)."
 		preemptible: "Optional number of attempts using a preemptible machine from Google Cloud prior to falling back to a standard machine (default = 0, i.e., don't use preemptible)."
 		monitoring_freq: "Delay between each output for process monitoring (in seconds). Default is 1 second."
-		
-  
 	}
 
 	meta {
@@ -173,7 +158,7 @@ task run_null_model {
 	>>>
 
 	runtime {
-		docker: "getting-started"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:15ad2c27e14814201bf33c27269492317c9e20c939ee881d7e3adf7279e08369"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		maxRetries: 2
@@ -196,25 +181,22 @@ task run_gwis_agg {
 	Float min_MAF
 	Float max_MAF
 	String meta_file_prefix
-	Boolean use_minor_allele
-  String AF_strata_range
 	Int threads
 	Int memory
 	Int disk
 	Int preemptible
 	Int monitoring_freq
+	
 	command <<<
 		dstat -c -d -m --nocolor ${monitoring_freq} > system_resource_usage.log &
 		atop -x -P PRM ${monitoring_freq} | grep '(R)' > process_resource_usage.log &
 
-		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" "${int_covar_names}" ${gdsfile} ${groupfile} "${gds_filter}" "${meta_file_prefix}" "${use_minor_allele}" "${AF_strata_range}" ${threads}
-		
-		tar czf ${meta_file_prefix}.tar ${meta_file_prefix}.*
-		
+		Rscript /MAGEE_prep.R ${null_modelfile} "${exposure_names}" "${int_covar_names}" ${gdsfile} ${groupfile} "${gds_filter}"
+		Rscript /MAGEE_GWIS.R ${gdsfile} ${min_MAF} ${max_MAF} ${threads} "${gds_filter}" "${meta_file_prefix}"
 	>>>
 
 	runtime {
-		docker: "getting-started"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:15ad2c27e14814201bf33c27269492317c9e20c939ee881d7e3adf7279e08369"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -224,7 +206,7 @@ task run_gwis_agg {
 
 	output {
 		File res = "magee_res"
-    File meta_file = "${meta_file_prefix}.tar"
+		Array[File] meta_file = glob("${meta_file_prefix}.*")
 		File system_resource_usage = "system_resource_usage.log"
 		File process_resource_usage = "process_resource_usage.log"
 	}
@@ -254,7 +236,7 @@ task run_gwis_sv {
 	>>>
 
 	runtime {
-		docker: "getting-started"
+		docker: "quay.io/large-scale-gxe-methods/magee-workflow@sha256:15ad2c27e14814201bf33c27269492317c9e20c939ee881d7e3adf7279e08369"
 		memory: "${memory} GB"
 		cpu: "${threads}"
 		disks: "local-disk ${disk} HDD"
@@ -273,17 +255,10 @@ task run_gwis_sv {
 task cat_results {
 
 	Array[File] results_array
-	String meta_file_prefix
-	Array[File] meta_analysis_output
-	String run_type
-	
+
 	command <<<
 		head -1 ${results_array[0]} > all_results.txt && \
 						for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
-						head -1 ${results_array[0]} > all_results.txt && \
-						for res in ${sep=" " results_array}; do tail -n +2 $res >> all_results.txt; done
-				
-						
 	>>>
 	
 	runtime {
@@ -295,4 +270,3 @@ task cat_results {
 		File all_results = "all_results.txt"
 	}
 }
-
