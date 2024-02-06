@@ -4,4 +4,4 @@ workflows:
     subclass: WDL
     primaryDescriptorPath: /magee_workflow.wdl
     testParameterFiles: 
-      - testfiles/test.json
+      - /testfiles/test.json
