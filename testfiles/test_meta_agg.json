@@ -1,0 +1,6 @@
+{
+  "run_MAGEE_meta.metafiles": ["testfiles/test1my_prefix.score.1", "testfiles/test2my_prefix.score.1","testfiles/test1my_prefix.cov.1","testfiles/test2my_prefix.cov.1"],
+  "run_MAGEE_meta.group_file": "testfiles/SetID.withweights.txt",
+ "run_MAGEE_meta.prefix": "test1my_prefix test2my_prefix"
+}
+
