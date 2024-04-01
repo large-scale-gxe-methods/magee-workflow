@@ -1,0 +1,5 @@
+{
+  "run_MAGEE_meta.metafiles": ["testfiles/my_prefix.tar","testfiles/my_prefix2.tar"],
+  "run_MAGEE_meta.group_file": "testfiles/SetID.withweights.txt",
+  "run_MAGEE_meta.meta_file_prefix": ["my_prefix", "my_prefix2"]
+}

@@ -1,0 +1,5 @@
+{
+  "run_MAGEE_meta.metafiles": ["testfiles/sv_result_1.txt", "testfiles/sv_result_2.txt"],
+  "run_MAGEE_meta.interaction": "age"
+}
+

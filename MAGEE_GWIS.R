@@ -12,8 +12,11 @@ max_MAF <- as.numeric(args[3])
 ncores <- as.integer(args[4])
 gds_filter <- args[5]
 meta_file_prefix <- args[6]
+use_minor_allele <- args[7]
+AF_strata_range <- args[8]
 
-# Apply gds filter if provided 
+AF_strata_range=c(substring(AF_strata_range, 1),substring(AF_strata_range, 3))
+# Apply gds filter if provided
 # (currently only string matches in "annotation/filter")
 if (gds_filter == "") {  # No filter -> pass filename
   gds <- gdsfile
@@ -30,6 +33,6 @@ mfp <- if (!(meta_file_prefix == "none")) meta_file_prefix else NULL
 # Run GWIS
 prep <- readRDS("magee_prep.rds")  # From MAGEE_prep.R script
 prep$geno.file <- gds  # Hack for now: replace GDS object with subsetted version
-res <- MAGEE.lowmem(prep, MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05, 
-       		    tests=c("JV", "JF", "JD"), ncores=ncores, meta.file.prefix=mfp)
+res <- MAGEE.lowmem(prep, MAF.range=c(min_MAF, max_MAF), miss.cutoff=0.05,
+       		    tests=c("JV", "JF", "JD"), ncores=ncores, meta.file.prefix=mfp,use.minor.allele=use_minor_allele,AF.strata.range=AF_strata_range)
 write_delim(res, "magee_res", delim=" ")
