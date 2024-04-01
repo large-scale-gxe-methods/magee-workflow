@@ -79,6 +79,7 @@ for(file in metafile_vec)
   colnames(temp)=gsub('\\-','\\.',colnames(temp))
   fwrite(temp,file)
 }
+
 output=glmm.gei.meta(metafile_vec,
               interaction=interaction,
               outfile=out)
@@ -97,3 +98,4 @@ output=glmm.gei.meta(metafile_vec,
            E.match=E.match)
   write.table(output,out)
 }
+
